@@ -1,0 +1,75 @@
+plugins {
+    id 'java'
+    id 'io.franzbecker.gradle-lombok' version '1.14' apply false
+    id 'maven-publish'
+}
+
+import org.apache.tools.ant.filters.ReplaceTokens
+
+allprojects {
+    apply plugin: 'java'
+    apply plugin: 'io.franzbecker.gradle-lombok'
+    apply plugin: 'maven-publish'
+
+    group 'net.daporkchop'
+    version '0.0.2'
+
+    sourceCompatibility = targetCompatibility = 1.8
+
+    ext {
+        porklibVersion = '0.2.0'
+    }
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven {
+            name = 'NukkitX'
+            url = 'https://repo.nukkitx.com/main/'
+        }
+        maven {
+            name = "DaPorkchop_"
+            url = "https://maven.daporkchop.net/"
+        }
+        maven {
+            name = 'sonatype'
+            url = 'https://oss.sonatype.org/content/groups/public/'
+        }
+    }
+
+    dependencies {
+        testCompile group: 'junit', name: 'junit', version: '4.12'
+
+        compileOnly 'cn.nukkit:nukkit:1.0-SNAPSHOT'
+    }
+
+    processResources {
+        from(sourceSets.main.resources.srcDirs) {
+            filter ReplaceTokens, tokens: [version: version]
+        }
+    }
+
+    task sourceJar(type: Jar) {
+        from sourceSets.main.allSource
+    }
+
+    publishing {
+        publications {
+            maven(MavenPublication) {
+                groupId = 'net.daporkchop'
+                artifactId = project.name
+                version = project.version
+
+                from components.java
+
+                artifact sourceJar {
+                    classifier "sources"
+                }
+            }
+        }
+    }
+
+    if (!"nukkitplugins".equalsIgnoreCase(project.name)) {
+        build.dependsOn(publishToMavenLocal)
+    }
+}

@@ -1,0 +1,7 @@
+name: AutoReply
+version: @version@
+api: ["1.0.7"]
+main: net.daporkchop.autoreply.AutoReply
+authors: [DaPorkchop_]
+description: Automatically reply to chat messages!
+website: https://daporkchop.net
