@@ -1,4 +1,15 @@
-# AutoReply
-*Very simple automatic reposnses to chat messages*
+# FloatingParticles
+*Makes particles that... float... duh*
 
-[NukkitX resource page](https://nukkitx.com/resources/autoreply.138/)
+### Commands
+
+- `/floatingparticle`
+  - **aliases**
+    - `/fp`
+  - **usage**
+    - `/fp clear`
+      - *deletes all floating particles in a world*
+    - `/fp`
+      - *add a particle of the default type (defined in config)*
+    - `/fp <type name>`
+      - *add a particle of the given type*
