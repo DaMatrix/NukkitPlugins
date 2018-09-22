@@ -1,0 +1,7 @@
+name: FloatingParticles
+version: @version@
+api: ["1.0.7"]
+main: net.daporkchop.floatingparticles.FloatingParticles
+authors: [DaPorkchop_]
+description: Add static, floating particles to your world
+website: https://daporkchop.net
