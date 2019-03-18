@@ -10,14 +10,13 @@ import cn.nukkit.plugin.PluginBase;
 import cn.nukkit.utils.Config;
 import cn.nukkit.utils.TextFormat;
 import cn.nukkit.utils.Utils;
-import it.unimi.dsi.fastutil.Hash;
-import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenCustomHashMap;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -28,28 +27,16 @@ public final class AutoReply extends PluginBase {
     private boolean caseSensitive;
     private boolean cancelChat;
     private BiFunction<String, String, Boolean> compareStrings;
-    private final Map<String, Function<Player, String>> mappings = new Object2ObjectLinkedOpenCustomHashMap<>(
-            new Hash.Strategy<String>() {
-                @Override
-                public int hashCode(String s) {
-                    return AutoReply.this.caseSensitive ? s.hashCode() : s.toLowerCase().hashCode();
-                }
-
-                @Override
-                public boolean equals(String s, String k1) {
-                    return AutoReply.this.compareStrings.apply(s, k1);
-                }
-            }
-    );
+    private final Map<StringWrapper, Function<Player, String>> mappings = new LinkedHashMap<>();
 
     @Override
     public void onEnable() {
         {
             File file = new File(this.getDataFolder(), "config.yml");
-            if (file.exists())    {
+            if (file.exists()) {
                 try {
                     String content = Utils.readFile(file);
-                    if (content.trim().isEmpty() && !file.delete())   {
+                    if (content.trim().isEmpty() && !file.delete()) {
                         throw new IllegalStateException(String.format("Unable to delete empty config file %s", file.getAbsolutePath()));
                     }
                 } catch (IOException e) {
@@ -67,7 +54,7 @@ public final class AutoReply extends PluginBase {
                 new Listener() {
                     @EventHandler
                     public void onChat(PlayerChatEvent event) {
-                        Function<Player, String> function = AutoReply.this.mappings.get(event.getMessage());
+                        Function<Player, String> function = AutoReply.this.mappings.get(new StringWrapper(event.getMessage()));
                         if (function != null) {
                             String msg = function.apply(event.getPlayer());
                             if (AutoReply.this.colorize) {
@@ -114,7 +101,7 @@ public final class AutoReply extends PluginBase {
             throw new IllegalStateException();
         }
         config.getAll().entrySet().stream().map(entry -> new Tuple<>(entry.getKey(), (String) entry.getValue()))
-                .forEach(tuple -> this.mappings.put(tuple.key, (player) -> {
+                .forEach(tuple -> this.mappings.put(new StringWrapper(tuple.key), (player) -> {
                     String response = tuple.value;
                     response = response.replaceAll("\\$name", player.getName());
                     response = response.replaceAll("\\$displayName", player.getDisplayName());
@@ -127,11 +114,34 @@ public final class AutoReply extends PluginBase {
     }
 
     @RequiredArgsConstructor
-    private static final class Tuple<K, V> {
+    protected static final class Tuple<K, V> {
         @NonNull
-        private final K key;
+        protected final K key;
 
         @NonNull
-        private final V value;
+        protected final V value;
+    }
+
+    @RequiredArgsConstructor
+    protected final class StringWrapper {
+        @NonNull
+        protected final String delegate;
+
+        @Override
+        public int hashCode() {
+            return AutoReply.this.caseSensitive ? this.delegate.hashCode() : this.delegate.toLowerCase().hashCode();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (o instanceof StringWrapper) {
+                o = ((StringWrapper) o).delegate;
+            }
+            if (o instanceof String) {
+                return AutoReply.this.compareStrings.apply(this.delegate, (String) o);
+            } else {
+                return false;
+            }
+        }
     }
 }
